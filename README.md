@@ -74,8 +74,3 @@ that page), which is why that worked immediately.
 - Try different chunk sizes and see how answer quality changes
 - Swap the local embedding model for Claude's own embeddings API and compare
 
-## What to put in your GitHub README
-
-When you publish this, add: what problem it solves, a short GIF/screenshot of it running,
-the architecture explanation above, and a "what I'd improve" section — that last part
-signals real engineering judgment to anyone reviewing it.
