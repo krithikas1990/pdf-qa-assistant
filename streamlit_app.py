@@ -11,11 +11,11 @@ Install extra dependency: pip install streamlit
 import streamlit as st
 import tempfile
 import os
-from rag_core import build_index_from_pdf, ask_claude
+from rag_core import build_index_from_pdf, ask_claude, extract_page_number_from_question
 
 st.set_page_config(page_title="PDF Q&A Assistant", page_icon="📄")
 st.title("📄 Document Q&A Assistant (RAG + Claude)")
-st.caption("Upload a PDF, then ask questions about its content.")
+st.caption("Upload a PDF, then ask questions about its content. Mention a page number (e.g. 'page 19') to search only that page.")
 
 if "store" not in st.session_state:
     st.session_state.store = None
@@ -36,13 +36,17 @@ if uploaded_file is not None and st.session_state.store is None:
 if st.session_state.store is not None:
     question = st.text_input("Ask a question about the document")
     if st.button("Ask") and question:
-        with st.spinner("Thinking..."):
-            chunks = st.session_state.store.retrieve(question)
-            answer = ask_claude(question, chunks)
-        st.session_state.history.append((question, answer))
+        page_filter = extract_page_number_from_question(question)
+        with st.spinner(f"Searching page {page_filter} only..." if page_filter else "Thinking..."):
+            chunks = st.session_state.store.retrieve(question, page_filter=page_filter)
+            if not chunks:
+                answer = f"I couldn't find any content on page {page_filter} in this document."
+            else:
+                answer = ask_claude(question, chunks)
+        st.session_state.history.append((question, answer, page_filter))
 
-    for q, a in reversed(st.session_state.history):
-        st.markdown(f"**Q: {q}**")
+    for q, a, page_filter in reversed(st.session_state.history):
+        st.markdown(f"**Q: {q}**" + (f"  \n*(Filtered to page {page_filter})*" if page_filter else ""))
         st.markdown(a)
         st.divider()
 
